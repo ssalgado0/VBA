@@ -1,12 +1,12 @@
 '------------------------------------------------------------
 ' Macro: ExtraerFechasDeUltimacion
-' Descripción:
-'   Consulta la web de la AEAT para obtener la
-'   "Fecha Final de Ultimación Completa" a partir de
-'   una lista de MRNs y vuelca los resultados en la hoja
-'   "Fechas de ultimación".
+' Description:
+'   Queries the AEAT website to obtain the
+'   final complete clearance date from
+'   a list of MRNs and outputs the results to the
+'   completion dates worksheet.
 '
-' Autor: ssalgado0@uoc.edu
+' Author: ssalgado0@uoc.edu
 '------------------------------------------------------------
 
 Sub ExtraerFechasDeUltimacion()
@@ -28,41 +28,41 @@ Sub ExtraerFechasDeUltimacion()
     Dim dayPart As String, monthPart As String, yearPart As String
     Dim results() As Variant
     
-    ' Desactivar actualizaciones para acelerar
+    ' Stop updates
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
     Application.EnableEvents = False
     
-    ' Definir la hoja de cálculo
+    ' Set worksheet
     Set ws = ThisWorkbook.Sheets("Fechas de ultimación")
     
-    ' Última fila con datos en columna B
+    ' Get last row with data in column B
     lastRow = ws.Cells(ws.Rows.count, 2).End(xlUp).Row
     
-    ' Leer parámetros en columna B
+    ' Save parameters pasted in column B by the user
     parameterList = ws.Range("B8:B" & lastRow).Value
     
-    ' Preparar matriz de resultados
+    ' Prepare results matrix
     ReDim results(1 To UBound(parameterList, 1), 1 To 1)
     
     ' Base URL
     baseUrl = "https://www1.agenciatributaria.gob.es/wlpl/ADTR-JDIT/Ncts5Detalle?CLAVE="
     
-    ' Bucle de parámetros
+    ' Parse AEAT webpage searching for the data of interest (completion date)
     For i = 1 To UBound(parameterList, 1)
         parameter = parameterList(i, 1)
         url = baseUrl & parameter
         
-        ' Crear objeto HTTP
+        ' Create HTTP object
         Set http = CreateObject("MSXML2.XMLHTTP")
         http.Open "GET", url, False
         http.send
         
-        ' Cargar HTML en documento
+        ' Load and save HTML
         Set htmlDoc = CreateObject("HTMLFILE")
         htmlDoc.body.innerHTML = http.responseText
         
-        ' Buscar <li> con la fecha
+        ' Search for the <li> element containing the completion date. Return blank if shipment has not been completed yet
         Set liElements = htmlDoc.getElementsByTagName("li")
         dateText = ""
         
@@ -77,6 +77,7 @@ Sub ExtraerFechasDeUltimacion()
                         monthPart = dateParts(1)
                         yearPart = dateParts(2)
                         If IsNumeric(dayPart) And IsNumeric(monthPart) Then
+                            ' Transform the date depending on the day of the month
                             If CInt(dayPart) <= 12 Then
                                 dateText = monthPart & "/" & dayPart & "/" & yearPart
                             Else
@@ -89,21 +90,21 @@ Sub ExtraerFechasDeUltimacion()
             End If
         Next liElement
         
-        ' Guardar resultado en matriz
+        ' Save result
         results(i, 1) = dateText
     Next i
     
-    ' Volcar resultados de una sola vez
+    ' Save final results of all of the shipments
     Set outputRange = ws.Range("C8:C" & lastRow)
     outputRange.Value = results
     
-    ' Mensaje de confirmación
+    ' Execution finished
     ws.Cells(2, 2).Value = "¡Hecho!"
     
-    ' Ajustar columnas
+    ' Adjust content
     ws.Columns("A:C").AutoFit
     
-    ' Reactivar Excel
+    ' Reactivate Excel
     Application.ScreenUpdating = True
     Application.Calculation = xlCalculationAutomatic
     Application.EnableEvents = True
