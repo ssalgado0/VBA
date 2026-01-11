@@ -1,3 +1,22 @@
+'------------------------------------------------------------
+' Macro: CheckTransitos
+' Description:
+'   Reads a list of transit keys from the worksheet and parses
+'   the AEAT transit detail page for each one.
+'
+'   The macro extracts recipient information, destination
+'   customs office, reference number, and seal data from the
+'   returned HTML, then validates the results using rule-based
+'   checks.
+'
+'   Valid records are written to the worksheet, while
+'   inconsistent or incomplete records are flagged with an
+'   error message. Results are finally sorted for easier
+'   review.
+'
+' Author: ssalgado0@uoc.edu
+'------------------------------------------------------------
+
 Sub CheckTransitos()
     Dim http As Object
     Dim htmlDoc As Object
